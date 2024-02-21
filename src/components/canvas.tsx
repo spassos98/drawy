@@ -18,12 +18,19 @@ type Point = {
 
 let startPos: Point = { x: 0, y: 0 }
 let endPos: Point = { x: 0, y: 0 }
+let selectStartPos: Point = { x: 0, y: 0 }
+let selectedSquareStartPos: Point = { x: 0, y: 0 }
 let isDrawing = false;
+let isMoving = false;
+let selectedSquareId = -1;
 
-export const Canvas = () => {
+type CanvasProps = {
+	tool: string
+}
+
+export const Canvas = (props: CanvasProps) => {
 	const [squares, setSquares] = useState([] as Square[]);
 
-	let selectedSquareId = -1;
 
 	const [templateSquare, setTemplateSquare] = useState({
 		x: 0,
@@ -70,41 +77,47 @@ export const Canvas = () => {
 
 	const handleMouseDown = (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
 		const svgPoint = transformEventCoordinates(event)
-		selectedSquareId = -1
-		for (let i = 0; i < squares.length; i++) {
-			const currSquare = squares[i]!;
-			if (pointIsInSquare(svgPoint, currSquare)) {
-				selectedSquareId = i;
-				break
-			}
-		}
-		if (selectedSquareId == -1) {
+		if (props.tool == "rectangle") {
 			startPos = { x: svgPoint.x, y: svgPoint.y }
 			resetTemplateSquare()
 			isDrawing = true
 		} else {
-			startPos = { x: -1, y: -1 }
-			const selectedSquare = squares[selectedSquareId]!
-			squares[selectedSquareId] = { ...selectedSquare, hexColor: "#000000" }
-			setSquares([...squares])
+			for (let i = 0; i < squares.length; i++) {
+				const currSquare = squares[i]!;
+				if (pointIsInSquare(svgPoint, currSquare)) {
+					selectedSquareId = i;
+					break
+				}
+			}
+			if (selectedSquareId !== -1) {
+				isMoving = true
+				startPos = { x: -1, y: -1 }
+				selectStartPos = { x: svgPoint.x, y: svgPoint.y }
+				const selectedSquare = squares[selectedSquareId]!
+				selectedSquareStartPos = { x: selectedSquare.x, y: selectedSquare.y }
+			}
 		}
-
 	}
 
 	const handleMouseUp = (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
-		const svgPoint = transformEventCoordinates(event)
-		if (selectedSquareId == -1 && startPos.x !== -1) {
-			endPos = { x: svgPoint.x, y: svgPoint.y }
-			drawnNewSquare()
-			isDrawing = false
-			resetTemplateSquare()
-			setTemplateSquare({ ...templateSquare, visibility: false })
+		if (props.tool == "rectangle") {
+			const svgPoint = transformEventCoordinates(event)
+			if (selectedSquareId == -1 && startPos.x !== -1) {
+				endPos = { x: svgPoint.x, y: svgPoint.y }
+				drawnNewSquare()
+				isDrawing = false
+				resetTemplateSquare()
+				setTemplateSquare({ ...templateSquare, visibility: false })
+			}
+		} else if (props.tool == "select") {
+			isMoving = false
+			selectedSquareId = -1
 		}
 	}
 
 	const handleMouseMove = (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
 		const svgPoint = transformEventCoordinates(event)
-		if (isDrawing) {
+		if (isDrawing && props.tool == "rectangle") {
 			setTemplateSquare({
 				x: Math.min(startPos.x, svgPoint.x),
 				y: Math.min(startPos.y, svgPoint.y),
@@ -112,6 +125,11 @@ export const Canvas = () => {
 				height: Math.abs(startPos.y - svgPoint.y),
 				visibility: true
 			})
+		} else if (props.tool == "select" && isMoving) {
+			const offSet: Point = { x: svgPoint.x - selectStartPos.x, y: svgPoint.y - selectStartPos.y }
+			const selectedSquare = squares[selectedSquareId]!
+			squares[selectedSquareId] = { ...selectedSquare, x: selectedSquareStartPos.x + offSet.x, y: selectedSquareStartPos.y + offSet.y }
+			setSquares([...squares])
 		}
 	}
 
