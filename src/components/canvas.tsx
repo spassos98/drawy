@@ -10,6 +10,12 @@ type Square = {
 	hexColor: string
 }
 
+type Circle = {
+	cx: number
+	cy: number
+	radius: number
+}
+
 type TemplateSquare = Pick<Square, 'x' | 'y' | 'width' | 'height'> & { visibility: boolean }
 
 type Point = {
@@ -17,12 +23,15 @@ type Point = {
 	y: number
 }
 
+const SELECTED_TEMPLATE_OFFSET_PX = 6;
+
 let startPos: Point = { x: 0, y: 0 }
 let endPos: Point = { x: 0, y: 0 }
 let selectStartPos: Point = { x: 0, y: 0 }
 let selectedSquareStartPos: Point = { x: 0, y: 0 }
 let isDrawing = false;
 let isMoving = false;
+let isShapeSelected = false;
 let selectedSquareId = -1;
 
 type CanvasProps = {
@@ -31,6 +40,7 @@ type CanvasProps = {
 
 export const Canvas = (props: CanvasProps) => {
 	const [squares, setSquares] = useState([] as Square[]);
+	const [anchorPoints, setAnchorPoints] = useState<Circle[]>([]);
 
 
 	const [templateSquare, setTemplateSquare] = useState({
@@ -49,6 +59,7 @@ export const Canvas = (props: CanvasProps) => {
 			height: 0,
 			visibility: false,
 		})
+		setAnchorPoints([])
 	}
 
 
@@ -76,6 +87,28 @@ export const Canvas = (props: CanvasProps) => {
 		setSquares([newSquare, ...squares])
 	}
 
+	function drawSelectedTemplateSquare() {
+		if (isShapeSelected) {
+			const selectedSquare = squares[selectedSquareId]!
+			const templateSquare = {
+				x: selectedSquare.x - SELECTED_TEMPLATE_OFFSET_PX,
+				y: selectedSquare.y - SELECTED_TEMPLATE_OFFSET_PX,
+				width: selectedSquare.width + 2 * SELECTED_TEMPLATE_OFFSET_PX,
+				height: selectedSquare.height + 2 * SELECTED_TEMPLATE_OFFSET_PX,
+				visibility: true
+			}
+			setTemplateSquare(templateSquare)
+			const anchorPoints: Circle[] = [[0, 0], [0, 1], [1, 0], [1, 1]].map((val => {
+				return {
+					cx: templateSquare.x + templateSquare.width * val[0],
+					cy: templateSquare.y + templateSquare.height * val[1],
+					radius: 6
+				}
+			}))
+			setAnchorPoints(anchorPoints)
+		}
+	}
+
 	const handleMouseDown = (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
 		const svgPoint = transformEventCoordinates(event)
 		if (props.tool == "RECTANGLE") {
@@ -91,11 +124,16 @@ export const Canvas = (props: CanvasProps) => {
 				}
 			}
 			if (selectedSquareId !== -1) {
+				isShapeSelected = true
+				drawSelectedTemplateSquare()
 				isMoving = true
 				startPos = { x: -1, y: -1 }
 				selectStartPos = { x: svgPoint.x, y: svgPoint.y }
 				const selectedSquare = squares[selectedSquareId]!
 				selectedSquareStartPos = { x: selectedSquare.x, y: selectedSquare.y }
+			} else {
+				isShapeSelected = false;
+				resetTemplateSquare();
 			}
 		}
 	}
@@ -131,6 +169,7 @@ export const Canvas = (props: CanvasProps) => {
 			const selectedSquare = squares[selectedSquareId]!
 			squares[selectedSquareId] = { ...selectedSquare, x: selectedSquareStartPos.x + offSet.x, y: selectedSquareStartPos.y + offSet.y }
 			setSquares([...squares])
+			drawSelectedTemplateSquare()
 		}
 	}
 
@@ -160,7 +199,10 @@ export const Canvas = (props: CanvasProps) => {
 						fill={square.hexColor}>
 					</rect>
 				))}
-				<rect className="fill-transparent outline-dashed" x={templateSquare.x} y={templateSquare.y} width={templateSquare.width} height={templateSquare.height} visibility={templateSquare.visibility ? "" : "hidden"}></rect>
+				<rect className={'fill-transparent ' + (isShapeSelected ? 'stroke-black' : 'outline-dotted')} x={templateSquare.x} y={templateSquare.y} width={templateSquare.width} height={templateSquare.height} visibility={templateSquare.visibility ? "" : "hidden"}></rect>
+				{anchorPoints.map((anchorPoint, index) => (
+					<circle className="stroke-black fill-white" key={index} cx={anchorPoint.cx} cy={anchorPoint.cy} r={anchorPoint.radius} />
+				))}
 			</svg>
 		</div >
 	)
