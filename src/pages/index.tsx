@@ -1,10 +1,11 @@
 import Head from "next/head";
+import { useState } from "react";
 import { Canvas } from "~/components/canvas";
+import { ToolSelection } from "~/components/toolSelection";
+import { type Tool } from "~/utils/tools/tools";
 
 export default function Home() {
-  // const hello = api.post.hello.useQuery({ text: "from tRPC" });
-  //
-  // const latestPost = api.post.getLatest.useQuery()
+  const [selectedTool, setTool] = useState<Tool>("SELECT");
 
   return (
     <>
@@ -14,10 +15,13 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col">
-        <h1 className="text-5xl font-extrabold text-black sm:text-[5rem]">
-          Drawy
-        </h1>
-        <Canvas />
+        <div className="flex">
+          <h1 className="text-5xl font-extrabold text-black sm:text-[5rem]">
+            Drawy
+          </h1>
+          <ToolSelection selectedTool={selectedTool} onSelect={(value: string) => setTool(value)} />
+        </div>
+        <Canvas tool={selectedTool} />
       </main>
     </>
   );
