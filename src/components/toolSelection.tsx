@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { ToolEnum, type Tool } from "~/utils/tools/tools";
 
 type ToolSelectionProps = {
-	onSelect: (value: string) => void
-	selectedTool: string
+	onSelect: (value: Tool) => void
+	selectedTool: Tool
 }
 
 export const ToolSelection = (props: ToolSelectionProps) => {
 
-	const handleChange = (event: any) => {
-		props.onSelect(event.target.value)
+	const handleChange = (event: { target: { value: string } }) => {
+		props.onSelect(event.target.value as Tool)
 	}
 
 	return (
@@ -17,16 +17,16 @@ export const ToolSelection = (props: ToolSelectionProps) => {
 				<input
 					onChange={handleChange}
 					id="select"
-					value={"select"}
-					type="radio" name="tool" checked={props.selectedTool == "select"} />
+					value={ToolEnum.SELECT}
+					type="radio" name="tool" checked={props.selectedTool == "SELECT"} />
 				<label>Select</label>
 			</div>
 			<div>
 				<input
 					onChange={handleChange}
 					id="rectangle"
-					value={"rectangle"}
-					type="radio" name="tool" checked={props.selectedTool == "rectangle"} />
+					value={ToolEnum.RECTANGLE}
+					type="radio" name="tool" checked={props.selectedTool == "RECTANGLE"} />
 				<label>Rectangle</label>
 			</div>
 		</div>

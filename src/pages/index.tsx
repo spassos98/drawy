@@ -2,9 +2,10 @@ import Head from "next/head";
 import { useState } from "react";
 import { Canvas } from "~/components/canvas";
 import { ToolSelection } from "~/components/toolSelection";
+import { type Tool } from "~/utils/tools/tools";
 
 export default function Home() {
-  const [selectedTool, setTool] = useState("rectangle");
+  const [selectedTool, setTool] = useState<Tool>("SELECT");
 
   return (
     <>

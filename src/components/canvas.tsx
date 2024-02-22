@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { type Tool } from "~/utils/tools/tools"
 
 type Square = {
 	id: number
@@ -25,7 +26,7 @@ let isMoving = false;
 let selectedSquareId = -1;
 
 type CanvasProps = {
-	tool: string
+	tool: Tool
 }
 
 export const Canvas = (props: CanvasProps) => {
@@ -77,7 +78,7 @@ export const Canvas = (props: CanvasProps) => {
 
 	const handleMouseDown = (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
 		const svgPoint = transformEventCoordinates(event)
-		if (props.tool == "rectangle") {
+		if (props.tool == "RECTANGLE") {
 			startPos = { x: svgPoint.x, y: svgPoint.y }
 			resetTemplateSquare()
 			isDrawing = true
@@ -100,7 +101,7 @@ export const Canvas = (props: CanvasProps) => {
 	}
 
 	const handleMouseUp = (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
-		if (props.tool == "rectangle") {
+		if (props.tool == "RECTANGLE") {
 			const svgPoint = transformEventCoordinates(event)
 			if (selectedSquareId == -1 && startPos.x !== -1) {
 				endPos = { x: svgPoint.x, y: svgPoint.y }
@@ -109,7 +110,7 @@ export const Canvas = (props: CanvasProps) => {
 				resetTemplateSquare()
 				setTemplateSquare({ ...templateSquare, visibility: false })
 			}
-		} else if (props.tool == "select") {
+		} else if (props.tool == "SELECT") {
 			isMoving = false
 			selectedSquareId = -1
 		}
@@ -117,7 +118,7 @@ export const Canvas = (props: CanvasProps) => {
 
 	const handleMouseMove = (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
 		const svgPoint = transformEventCoordinates(event)
-		if (isDrawing && props.tool == "rectangle") {
+		if (isDrawing && props.tool == "RECTANGLE") {
 			setTemplateSquare({
 				x: Math.min(startPos.x, svgPoint.x),
 				y: Math.min(startPos.y, svgPoint.y),
@@ -125,7 +126,7 @@ export const Canvas = (props: CanvasProps) => {
 				height: Math.abs(startPos.y - svgPoint.y),
 				visibility: true
 			})
-		} else if (props.tool == "select" && isMoving) {
+		} else if (props.tool == "SELECT" && isMoving) {
 			const offSet: Point = { x: svgPoint.x - selectStartPos.x, y: svgPoint.y - selectStartPos.y }
 			const selectedSquare = squares[selectedSquareId]!
 			squares[selectedSquareId] = { ...selectedSquare, x: selectedSquareStartPos.x + offSet.x, y: selectedSquareStartPos.y + offSet.y }
