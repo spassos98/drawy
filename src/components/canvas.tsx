@@ -17,7 +17,7 @@ type Circle = {
 	radius: number
 }
 
-type TemplateSquare = Pick<Square, 'x' | 'y' | 'width' | 'height'> & { visibility: boolean }
+type TemplateSquare = Pick<Square, 'x' | 'y' | 'width' | 'height' | 'rotationDeg'> & { visibility: boolean }
 
 type Point = {
 	x: number
@@ -68,6 +68,7 @@ export const Canvas = (props: CanvasProps) => {
 			width: 0,
 			height: 0,
 			visibility: false,
+			rotationDeg: 0
 		})
 		setAnchorPoints([])
 		setRotationPoint(NULL_CIRCLE)
@@ -102,11 +103,12 @@ export const Canvas = (props: CanvasProps) => {
 	function drawSelectedTemplateSquare() {
 		if (isShapeSelected) {
 			const selectedSquare = squares[selectedSquareId]!
-			const templateSquare = {
+			const templateSquare: TemplateSquare = {
 				x: selectedSquare.x - SELECTED_TEMPLATE_OFFSET_PX,
 				y: selectedSquare.y - SELECTED_TEMPLATE_OFFSET_PX,
 				width: selectedSquare.width + 2 * SELECTED_TEMPLATE_OFFSET_PX,
 				height: selectedSquare.height + 2 * SELECTED_TEMPLATE_OFFSET_PX,
+				rotationDeg: selectedSquare.rotationDeg,
 				visibility: true
 			}
 			setTemplateSquare(templateSquare)
@@ -273,9 +275,10 @@ export const Canvas = (props: CanvasProps) => {
 				setSquares([...squares])
 				drawSelectedTemplateSquare()
 			} else if (isRotationSelected) {
-				const offSet: Point = { x: svgPoint.x - selectStartPos.x, y: svgPoint.y - selectStartPos.y }
 				const selectedSquare = squares[selectedSquareId]!
-				squares[selectedSquareId] = { ...selectedSquare, rotationDeg: offSet.x }
+				const squareCenter = { x: selectedSquare.x + selectedSquare.width / 2, y: selectedSquare.y + selectedSquare.height / 2 }
+				const degs = Math.atan2(svgPoint.y - squareCenter.y, svgPoint.x - squareCenter.x) * 180 / Math.PI + 180
+				squares[selectedSquareId] = { ...selectedSquare, rotationDeg: degs - 90.0 }
 				setSquares([...squares])
 				drawSelectedTemplateSquare()
 			}
@@ -304,9 +307,25 @@ export const Canvas = (props: CanvasProps) => {
 						fill={square.hexColor}>
 					</rect>
 				))}
-				<rect className={'fill-transparent ' + (isShapeSelected ? 'stroke-black' : 'outline-dotted')} x={templateSquare.x} y={templateSquare.y} width={templateSquare.width} height={templateSquare.height} visibility={templateSquare.visibility ? "" : "hidden"}></rect>
+				<rect
+					className={'fill-transparent ' + (isShapeSelected ? 'stroke-black' : 'outline-dotted')}
+					style={{ transformBox: "fill-box", transformOrigin: "center", transform: `rotate(${templateSquare.rotationDeg}deg)` }}
+					x={templateSquare.x}
+					y={templateSquare.y}
+					width={templateSquare.width}
+					height={templateSquare.height}
+					visibility={templateSquare.visibility ? "" : "hidden"} />
+
 				{anchorPoints.map((anchorPoint, index) => (
-					<circle className="stroke-black fill-white" cursor={anchorIdToCursor(index)} key={index} cx={anchorPoint.cx} cy={anchorPoint.cy} r={anchorPoint.radius} />
+					<circle
+						className="stroke-black fill-white"
+						cursor={anchorIdToCursor(index)}
+						style={{ transformBox: "fill-box", transformOrigin: "center", transform: `rotate(${templateSquare.rotationDeg}deg)` }}
+						key={index}
+						cx={anchorPoint.cx}
+						cy={anchorPoint.cy}
+						r={anchorPoint.radius}
+					/>
 				))}
 				<circle key={"rotation-point"} cx={rotationPoint.cx} cy={rotationPoint.cy} r={rotationPoint.radius} />
 			</svg>
