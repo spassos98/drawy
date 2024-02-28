@@ -100,6 +100,17 @@ export const Canvas = (props: CanvasProps) => {
 		setSquares([newSquare, ...squares])
 	}
 
+	function rotatePoint(centerPoint: Point, pointToRotate: Point, deg: number) {
+		// Transform the point to rotate so the center point is equivalent to (0,0)
+		const newPoint: Point = { x: pointToRotate.x - centerPoint.x, y: pointToRotate.y - centerPoint.y }
+		const rad = deg * (Math.PI / 180.0)
+		const rotatedPoint: Point = {
+			x: Math.cos(rad) * newPoint.x - Math.sin(rad) * newPoint.y + centerPoint.x,
+			y: Math.sin(rad) * newPoint.x + Math.cos(rad) * newPoint.y + centerPoint.y
+		}
+		return rotatedPoint
+	}
+
 	function drawSelectedTemplateSquare() {
 		if (isShapeSelected) {
 			const selectedSquare = squares[selectedSquareId]!
@@ -112,17 +123,31 @@ export const Canvas = (props: CanvasProps) => {
 				visibility: true
 			}
 			setTemplateSquare(templateSquare)
+			const squareCenter: Point = {
+				x: templateSquare.x + templateSquare.width / 2,
+				y: templateSquare.y + templateSquare.height / 2
+			}
 			const anchorPoints: Circle[] = iterations.map((val => {
+				const fixedAnchorPoint: Point = {
+					x: templateSquare.x + templateSquare.width * val[0],
+					y: templateSquare.y + templateSquare.height * val[1],
+				}
+				const rotatedAnchorPoint = rotatePoint(squareCenter, fixedAnchorPoint, selectedSquare.rotationDeg)
 				return {
-					cx: templateSquare.x + templateSquare.width * val[0],
-					cy: templateSquare.y + templateSquare.height * val[1],
+					cx: rotatedAnchorPoint.x,
+					cy: rotatedAnchorPoint.y,
 					radius: 6
 				}
 			}))
 			setAnchorPoints(anchorPoints)
+			const fixedRotationPoint: Point = {
+				x: templateSquare.x + templateSquare.width / 2,
+				y: templateSquare.y - ROTATION_POINT_OFFSET,
+			}
+			const rotatedRotationPoint = rotatePoint(squareCenter, fixedRotationPoint, selectedSquare.rotationDeg)
 			setRotationPoint({
-				cx: templateSquare.x + templateSquare.width / 2,
-				cy: templateSquare.y - ROTATION_POINT_OFFSET,
+				cx: rotatedRotationPoint.x,
+				cy: rotatedRotationPoint.y,
 				radius: 6
 			})
 		}
@@ -227,6 +252,7 @@ export const Canvas = (props: CanvasProps) => {
 		} else if (props.tool == "SELECT") {
 			isMoving = false
 			isAnchorSelected = false
+			isRotationSelected = false
 			selectedAnchorId = -1
 		}
 	}
@@ -239,6 +265,7 @@ export const Canvas = (props: CanvasProps) => {
 				y: Math.min(startPos.y, svgPoint.y),
 				width: Math.abs(startPos.x - svgPoint.x),
 				height: Math.abs(startPos.y - svgPoint.y),
+				rotationDeg: 0,
 				visibility: true
 			})
 		} else if (props.tool == "SELECT") {
