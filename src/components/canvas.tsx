@@ -153,9 +153,19 @@ export const Canvas = (props: CanvasProps) => {
 		}
 	}
 
+	function getSquareCenter(square: Square): Point {
+		return {
+			x: square.x + square.width / 2,
+			y: square.y + square.height / 2
+		}
+	}
+
 	function pointIsInSquare(point: DOMPoint, square: Square) {
-		const isHorizontallyContained = square.x < point.x && point.x < square.x + square.width
-		const isVerticallyContained = square.y < point.y && point.y < square.y + square.height
+		// If you apply the inverse rotation to the point around the square center
+		// You would know if that point is inside the rotated square
+		const unrotatedPoint = rotatePoint(getSquareCenter(square), point, -1 * square.rotationDeg)
+		const isHorizontallyContained = square.x < unrotatedPoint.x && unrotatedPoint.x < square.x + square.width
+		const isVerticallyContained = square.y < unrotatedPoint.y && unrotatedPoint.y < square.y + square.height
 		return isHorizontallyContained && isVerticallyContained
 	}
 
