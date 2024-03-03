@@ -19,7 +19,10 @@ export default function Home() {
           <h1 className="text-5xl font-extrabold text-black sm:text-[5rem]">
             Drawy
           </h1>
-          <ToolSelection selectedTool={selectedTool} onSelect={(value: string) => setTool(value)} />
+          <ToolSelection
+            selectedTool={selectedTool}
+            onSelect={(value: string) => setTool(value as Tool)}
+          />
         </div>
         <Canvas tool={selectedTool} />
       </main>
